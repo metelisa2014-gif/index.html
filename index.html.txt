@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suivi des Repos - DR Justice Kasserine</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root { --primary: #1e3a8a; --secondary: #3b82f6; --accent: #f59e0b; --danger: #ef4444; --success: #10b981; }
+body { font-family: 'Roboto', 'Cairo', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+.arabic { font-family: 'Cairo', sans-serif; direction: rtl; }
+.glass { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
+.card-hover { transition: all 0.3s; }
+.card-hover:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+.sidebar-item { transition: all 0.3s; border-right: 3px solid transparent; }
+.sidebar-item:hover, .sidebar-item.active { background: rgba(59,130,246,0.1); border-right-color: #3b82f6; color: #1e3a8a; }
+.bg-justice { background-image: url('https://images.unsplash.com/photo-1589829545856-d10d557cf95f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'); background-size: cover; background-position: center; background-attachment: fixed; }
+.alert-row { background: rgba(239,68,68,0.1) !important; border-left: 4px solid #ef4444; }
+.milk-row { background: rgba(16,185,129,0.1) !important; border-left: 4px solid #10b981; }
+</style>
+</head>
+<body class="bg-justice">
+
+<!-- Login -->
+<div id="loginPage" class="min-h-screen flex items-center justify-center p-4">
+<div class="glass rounded-2xl shadow-2xl p-8 w-full max-w-md">
+<div class="text-center mb-8">
+<div class="w-24 h-24 bg-blue-900 rounded-full mx-auto mb-4 flex items-center justify-center"><i class="fas fa-balance-scale text-4xl text-white"></i></div>
+<h1 class="text-2xl font-bold text-blue-900">Direction RÈgionale de la Justice</h1>
+<h2 class="text-xl font-semibold text-gray-700">Kasserine</h2>
+<p class="text-gray-600 mt-2">Suivi des Repos des EmployÈs</p>
+</div>
+<form id="loginForm" class="space-y-6">
+<div><label class="block text-sm font-medium text-gray-700 mb-2">Nom d'utilisateur</label>
+<div class="relative"><i class="fas fa-user absolute left-3 top-3 text-gray-400"></i>
+<input type="text" id="username" class="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500" required></div></div>
+<div><label class="block text-sm font-medium text-gray-700 mb-2">Mot de passe</label>
+<div class="relative"><i class="fas fa-lock absolute left-3 top-3 text-gray-400"></i>
+<input type="password" id="password" class="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500" required></div></div>
+<div><label class="block text-sm font-medium text-gray-700 mb-2">Type</label>
+<select id="userType" class="w-full px-4 py-3 border rounded-lg">
+<option value="admin">Administrateur</option>
+<option value="agent">Agent</option>
+</select></div>
+<button type="submit" class="w-full bg-blue-900 text-white py-3 rounded-lg hover:bg-blue-800 font-semibold">Se connecter <i class="fas fa-sign-in-alt ml-2"></i></button>
+</form>
+</div>
+</div>
+
+<!-- Main App -->
+<div id="mainApp" class="hidden min-h-screen">
+<!-- Sidebar -->
+<div class="fixed left-0 top-0 h-full w-64 bg-white shadow-2xl z-50 overflow-y-auto">
+<div class="p-6 bg-blue-900 text-white text-center">
+<i class="fas fa-balance-scale text-3xl mb-2"></i>
+<h3 class="font-bold">DR Justice Kasserine</h3>
+<p class="text-sm text-blue-200" id="userDisplay">Admin</p>
+</div>
+<nav class="mt-6">
+<a href="#" onclick="show('dashboard')" class="sidebar-item active flex items-center px-6 py-3 text-gray-700"><i class="fas fa-home w-6"></i><span class="ml-3">Tableau de bord</span></a>
+<a href="#" onclick="show('employees')" class="sidebar-item flex items-center px-6 py-3 text-gray-700"><i class="fas fa-users w-6"></i><span class="ml-3">Gestion EmployÈs</span></a>
+<a href="#" onclick="show('maladie')" class="sidebar-item flex items-center px-6 py-3 text-gray-700"><i class="fas fa-hospital w-6 text-red-500"></i><span class="ml-3">CongÈs Maladie</span></a>
+<a href="#" onclick="show('repos')" class="sidebar-item flex items-center px-6 py-3 text-gray-700"><i class="fas fa-umbrella-beach w-6 text-green-500"></i><span class="ml-3">CongÈs Ordinaires</span></a>
+<a href="#" onclick="show('absences')" class="sidebar-item flex items-center px-6 py-3 text-gray-700"><i class="fas fa-user-times w-6 text-orange-500"></i><span class="ml-3">Absences</span></a>
+<a href="#" onclick="show('alerts')" class="sidebar-item flex items-center px-6 py-3 text-gray-700"><i class="fas fa-exclamation-triangle w-6 text-yellow-500"></i><span class="ml-3">Alertes</span><span id="alertBadge" class="ml-auto bg-red-500 text-white text-xs rounded-full px-2 hidden">0</span></a>
+<a href="#" onclick="show('milk')" class="sidebar-item flex items-center px-6 py-3 text-gray-700"><i class="fas fa-glass-whiskey w-6 text-blue-400"></i><span class="ml-3">Prime de Lait</span></a>
+<a href="#" onclick="show('reports')" class="sidebar-item flex items-center px-6 py-3 text-gray-700"><i class="fas fa-file-pdf w-6 text-purple-500"></i><span class="ml-3">Rapports PDF</span></a>
+<div class="border-t mt-6 pt-6"><a href="#" onclick="logout()" class="sidebar-item flex items-center px-6 py-3 text-red-600"><i class="fas fa-sign-out-alt w-6"></i><span class="ml-3">DÈconnexion</span></a></div>
+</nav>
+</div>
+
+<div class="ml-64 p-8">
+<div class="glass rounded-xl p-6 mb-8 flex justify-between items-center">
+<div><h1 class="text-2xl font-bold text-blue-900" id="pageTitle">Tableau de bord</h1><p class="text-gray-600" id="currentDate"></p></div>
+<div class="flex items-center gap-4"><button onclick="toggleLang()" class="bg-blue-100 text-blue-900 px-4 py-2 rounded-lg"><i class="fas fa-globe mr-2"></i><span id="langBtn">???????</span></button><div class="relative"><i class="fas fa-bell text-2xl text-gray-600"></i><span id="notifBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span></div></div>
+</div>
+
+<!-- Dashboard et autres sections ici (comme dans ﬂÊœﬂ «·Õ«·Ì) -->
+
+</div>
+</div>
+
+<script>
+// === Utilisateurs exemple ===
+const users = [
+{username:'admin', password:'admin', type:'admin'},
+{username:'agent', password:'1234', type:'agent'}
+];
+
+// === Login rÈel ===
+document.getElementById('loginForm').addEventListener('submit', e=>{
+e.preventDefault();
+const u = document.getElementById('username').value;
+const p = document.getElementById('password').value;
+const t = document.getElementById('userType').value;
+const user = users.find(x=>x.username===u && x.password===p && x.type===t);
+if(user){
+document.getElementById('loginPage').classList.add('hidden');
+document.getElementById('mainApp').classList.remove('hidden');
+document.getElementById('userDisplay').textContent = user.username;
+initDashboard();
+}else{
+alert('Nom d\'utilisateur ou mot de passe incorrect!');
+}
+});
+
+// === Fonctions gÈnÈriques (initDashboard, show, logout, etc.) ===
+// ... «‰”Œ ﬂ· «·‹ JS „‰ «·ﬂÊœ «·ﬁœÌ„ Â‰« ...
+</script>
+
+</body>
+</html>
